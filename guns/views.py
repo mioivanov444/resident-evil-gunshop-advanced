@@ -1,148 +1,133 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Gun, Category
-from reviews.models import Review
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db.models import Q, Avg
 from reviews.forms import ReviewForm
-from django.db.models import Avg
-import math
+from reviews.models import Review
+from .models import Gun, Category
 from .forms import GunForm, CategoryForm
-from django.contrib.admin.views.decorators import staff_member_required
-from django.db.models import Q
+import math
 
-def gun_list(request):
-    query = request.GET.get('q')
-    sort_by = request.GET.get('sort', 'name')
-    order = request.GET.get('order', 'asc')
-
-    guns = Gun.objects.all()
-
-    #search filter
-    if query:
-        guns = guns.filter(
-            Q(name__icontains=query) |
-            Q(game__icontains=query)
-        )
-
-    # sorting
-    if sort_by in ['name', 'game']:
-        if order == 'desc':
-            sort_by = f'-{sort_by}'
-        guns = guns.order_by(sort_by)
-
-    return render(request, 'guns/gun_list.html', {
-        'guns': guns,
-        'query': query,
-        'sort_by': sort_by.lstrip('-'),
-        'order': order,
-    })
-
-def gun_detail(request, slug):
-    gun = get_object_or_404(Gun, slug=slug)
-    reviews = gun.reviews.all().order_by('-created_at')
-
-    #Average rating
-    average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
-    average_rating_int = math.floor(average_rating)
-
-    if request.method == 'POST':
-        form = ReviewForm(request.POST)
-        if form.is_valid():
-            review = form.save(commit=False)
-            review.gun = gun
-            review.save()
-            return redirect('gun_detail', slug=gun.slug)
-    else:
-        form = ReviewForm()
+class StaffRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_staff
 
 
+class GunListView(ListView):
+    model = Gun
+    template_name = 'guns/gun_list.html'
+    context_object_name = 'guns'
 
-    context = {
-        'gun': gun,
-        'reviews': reviews,
-        'form': form,
-        'average_rating': average_rating,
-        'average_rating_int': average_rating_int,
-    }
-    return render(request, 'guns/gun_detail.html', context)
-
-def category_list(request):
-    categories = Category.objects.all()
-    return render(request, 'guns/category_list.html', {
-        'categories': categories
-    })
+    def get_queryset(self):
+        qs = super().get_queryset()
+        query = self.request.GET.get('q')
+        sort_by = self.request.GET.get('sort', 'name')
+        order = self.request.GET.get('order', 'asc')
 
 
-
-def category_detail(request, slug):
-    category = get_object_or_404(Category, slug=slug)
-    guns = category.guns.all()
-    return render(request, 'guns/category_detail.html', {
-        'category': category,
-        'guns': guns
-    })
+        if query:
+            qs = qs.filter(
+                Q(name__icontains=query) |
+                Q(game__icontains=query)
+            )
 
 
-def gun_create(request):
-    if request.method == 'POST':
-        form = GunForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('gun_list')
-    else:
-        form = GunForm()
-    return render(request, 'guns/gun_form.html', {'form': form, 'title': 'Add New Gun'})
+        if sort_by in ['name', 'game']:
+            if order == 'desc':
+                sort_by = f'-{sort_by}'
+            qs = qs.order_by(sort_by)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query'] = self.request.GET.get('q', '')
+        context['sort_by'] = self.request.GET.get('sort', 'name')
+        context['order'] = self.request.GET.get('order', 'asc')
+        return context
+
+class GunDetailView(DetailView):
+    model = Gun
+    template_name = 'guns/gun_detail.html'
+    context_object_name = 'gun'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        gun = self.object
+        reviews = gun.reviews.all().order_by('-created_at')
+        average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+        average_rating_int = math.floor(average_rating)
 
 
+        if self.request.method == 'POST':
+            form = ReviewForm(self.request.POST)
+            if form.is_valid() and self.request.user.is_authenticated:
+                review = form.save(commit=False)
+                review.gun = gun
+                review.save()
+                return redirect('gun_detail', slug=gun.slug)
+        else:
+            form = ReviewForm()
 
-def gun_update(request, slug):
-    gun = get_object_or_404(Gun, slug=slug)
-    if request.method == 'POST':
-        form = GunForm(request.POST, request.FILES, instance=gun)
-        if form.is_valid():
-            form.save()
-            return redirect('gun_detail', slug=gun.slug)
-    else:
-        form = GunForm(instance=gun)
-    return render(request, 'guns/gun_form.html', {'form': form, 'title': f'Edit {gun.name}'})
+        context.update({
+            'reviews': reviews,
+            'form': form,
+            'average_rating': average_rating,
+            'average_rating_int': average_rating_int,
+        })
+        return context
 
-def gun_delete(request, slug):
-    gun = get_object_or_404(Gun, slug=slug)
-    if request.method == 'POST':
-        gun.delete()
-        return redirect('gun_list')
-    return render(request, 'guns/gun_confirm_delete.html', {'gun': gun})
+class GunCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
+    model = Gun
+    form_class = GunForm
+    template_name = 'guns/gun_form.html'
+    success_url = reverse_lazy('gun_list')
+    login_url = 'login'
 
-def category_create(request):
-    if request.method == 'POST':
-        form = CategoryForm(request.POST)
-        if form.is_valid():
-            category = form.save()
-            return redirect('category_list')
-    else:
-        form = CategoryForm()
-    return render(request, 'guns/category_form.html', {'form': form, 'title': 'Add Category'})
+class GunUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
+    model = Gun
+    form_class = GunForm
+    template_name = 'guns/gun_form.html'
+    login_url = 'login'
 
+    def get_success_url(self):
+        return reverse_lazy('gun_detail', kwargs={'slug': self.object.slug})
 
-def category_delete(request, slug):
-    category = get_object_or_404(Category, slug=slug)
-
-    if request.method == 'POST':
-        category.delete()
-        return redirect('category_list')
-
-    return render(request, 'guns/category_confirm_delete.html', {'category': category})
+class GunDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
+    model = Gun
+    template_name = 'guns/gun_confirm_delete.html'
+    success_url = reverse_lazy('gun_list')
+    login_url = 'login'
 
 
-def category_update(request, slug):
-    category = get_object_or_404(Category, slug=slug)
-    if request.method == 'POST':
-        form = CategoryForm(request.POST, instance=category)
-        if form.is_valid():
-            form.save()
-            return redirect('category_list')
-    else:
-        form = CategoryForm(instance=category)
+class CategoryListView(ListView):
+    model = Category
+    template_name = 'guns/category_list.html'
+    context_object_name = 'categories'
 
-    return render(request, 'guns/category_form.html', {
-        'form': form,
-        'title': f'Edit Category: {category.name}'
-    })
+class CategoryDetailView(DetailView):
+    model = Category
+    template_name = 'guns/category_detail.html'
+    context_object_name = 'category'
+
+class CategoryCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
+    model = Category
+    form_class = CategoryForm
+    template_name = 'guns/category_form.html'
+    success_url = reverse_lazy('category_list')
+    login_url = 'login'
+
+class CategoryUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
+    model = Category
+    form_class = CategoryForm
+    template_name = 'guns/category_form.html'
+    login_url = 'login'
+
+    def get_success_url(self):
+        return reverse_lazy('category_list')
+
+class CategoryDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
+    model = Category
+    template_name = 'guns/category_confirm_delete.html'
+    success_url = reverse_lazy('category_list')
+    login_url = 'login'

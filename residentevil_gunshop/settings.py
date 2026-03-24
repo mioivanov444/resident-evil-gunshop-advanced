@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'guns',
     'reviews',
     'core',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -80,8 +81,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'residentevil_gunshop',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
+        'USER': 'mio44',
+        'PASSWORD': 'postgresmio',
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -128,3 +129,7 @@ STATICFILES_DIRS = [BASE_DIR / "static",]
 #Media section
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'

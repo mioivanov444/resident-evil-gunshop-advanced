@@ -5,16 +5,14 @@ class ReviewForm(forms.ModelForm):
     class Meta:
         model = Review
 
-        fields = ['name', 'text', 'rating']
+        fields = ['text', 'rating']
 
         labels = {
-            'name': 'Your name (optional)',
             'text': 'Review',
             'rating': 'Rating (1-5)',
         }
 
         help_texts = {
-            'name': 'Leave blank to post anonymously.',
             'rating': 'Enter a number from 1 (worst) to 5 (best).',
         }
 

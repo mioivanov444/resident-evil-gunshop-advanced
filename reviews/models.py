@@ -1,5 +1,6 @@
 from django.db import models
 from guns.models import Gun
+from users.models import User
 
 
 class Review(models.Model):
@@ -8,10 +9,11 @@ class Review(models.Model):
         on_delete=models.CASCADE,
         related_name='reviews'
     )
-    name = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text="Optional name (leave blank to post anonymously)"
+    user = models.ForeignKey(
+        User,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name='reviews'
     )
     text = models.TextField()
     rating = models.PositiveSmallIntegerField(

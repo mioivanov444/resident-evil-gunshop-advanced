@@ -2,16 +2,18 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="mb-4">Edit Review</h1>
+    <h1 class="mb-4">{{ title|default:"Edit Review" }}</h1>
 
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
 
         <button type="submit" class="btn btn-danger">Save Changes</button>
-        <a href="{% url 'gun_detail' review.gun.slug %}" class="btn btn-secondary ms-2">
-            Cancel
-        </a>
+        {% if gun %}
+            <a href="{% url 'gun_detail' gun.slug %}" class="btn btn-secondary ms-2">Cancel</a>
+        {% elif object %}
+            <a href="{% url 'gun_detail' object.gun.slug %}" class="btn btn-secondary ms-2">Cancel</a>
+        {% endif %}
     </form>
 </div>
 {% endblock %}
