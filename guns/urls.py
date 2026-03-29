@@ -3,6 +3,7 @@ from .views import (
     GunListView, GunDetailView, GunCreateView, GunUpdateView, GunDeleteView,
     CategoryListView, CategoryDetailView, CategoryCreateView, CategoryUpdateView, CategoryDeleteView
 )
+from .api_views import GunListAPIView, GunDetailAPIView, CategoryListAPIView, CategoryDetailAPIView
 
 urlpatterns = [
     path('', GunListView.as_view(), name='gun_list'),
@@ -15,4 +16,15 @@ urlpatterns = [
     path('<slug:slug>/edit/', GunUpdateView.as_view(), name='gun_update'),
     path('<slug:slug>/delete/', GunDeleteView.as_view(), name='gun_delete'),
     path('<slug:slug>/', GunDetailView.as_view(), name='gun_detail'),
+]
+
+
+
+# DRF API URLs
+urlpatterns += [
+    path('api/guns/', GunListAPIView.as_view(), name='api_gun_list'),
+    path('api/guns/<slug:slug>/', GunDetailAPIView.as_view(), name='api_gun_detail'),
+
+    path('api/categories/', CategoryListAPIView.as_view(), name='api_category_list'),
+    path('api/categories/<slug:slug>/', CategoryDetailAPIView.as_view(), name='api_category_detail'),
 ]
