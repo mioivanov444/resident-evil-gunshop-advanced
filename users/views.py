@@ -7,6 +7,8 @@ from django.views.generic import DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Profile
 from .forms import ProfileForm
+from guns.tasks import send_welcome_email
+from django.http import JsonResponse
 
 class RegisterView(CreateView):
     form_class = RegisterForm
@@ -37,3 +39,11 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_object(self):
         return self.request.user.profile
+
+
+def register_user(request):
+    email = "user@example.com"
+
+    send_welcome_email.delay(email)
+
+    return JsonResponse({"message": "User registered!"})

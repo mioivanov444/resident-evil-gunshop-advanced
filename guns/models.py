@@ -29,6 +29,7 @@ class Gun(models.Model):
         related_name='guns',
         blank=True,
     )
+    stock = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -40,4 +41,6 @@ class Gun(models.Model):
 
     def __str__(self):
         return self.name
+
+
 

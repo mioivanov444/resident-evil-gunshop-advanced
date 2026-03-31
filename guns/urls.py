@@ -3,7 +3,7 @@ from .views import (
     GunListView, GunDetailView, GunCreateView, GunUpdateView, GunDeleteView,
     CategoryListView, CategoryDetailView, CategoryCreateView, CategoryUpdateView, CategoryDeleteView
 )
-from .api_views import GunListAPIView, GunDetailAPIView, CategoryListAPIView, CategoryDetailAPIView
+from .api_views import GunListAPIView, GunDetailAPIView, CategoryListAPIView, CategoryDetailAPIView, SendEmailAPIView
 
 urlpatterns = [
     path('', GunListView.as_view(), name='gun_list'),
@@ -27,4 +27,6 @@ urlpatterns += [
 
     path('api/categories/', CategoryListAPIView.as_view(), name='api_category_list'),
     path('api/categories/<slug:slug>/', CategoryDetailAPIView.as_view(), name='api_category_detail'),
+
+    path('api/send-email/', SendEmailAPIView.as_view(), name='send_email'),
 ]

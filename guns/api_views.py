@@ -1,7 +1,12 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from .models import Gun, Category
 from .serializers import GunSerializer, CategorySerializer
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .tasks import send_welcome_email
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 class GunListAPIView(generics.ListCreateAPIView):
     queryset = Gun.objects.all()
@@ -25,3 +30,23 @@ class CategoryDetailAPIView(generics.RetrieveAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'slug'
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class SendEmailAPIView(APIView):
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        if not email:
+            return Response(
+                {"error": "Email field is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+        task = send_welcome_email.delay(email)
+
+        return Response(
+            {"message": "Email task queued.", "task_id": task.id},
+            status=status.HTTP_202_ACCEPTED
+        )
