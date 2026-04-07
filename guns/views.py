@@ -79,18 +79,14 @@ class GunDetailView(DetailView):
         })
         return context
 
-class GunCreateView(LoginRequiredMixin, ModeratorRequiredMixin, CreateView):
+class GunCreateView(LoginRequiredMixin, CreateView):
     model = Gun
     form_class = GunForm
     template_name = 'guns/gun_form.html'
     success_url = reverse_lazy('gun_list')
     login_url = 'login'
 
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        return response
-
-class GunUpdateView(LoginRequiredMixin, ModeratorRequiredMixin, UpdateView):
+class GunUpdateView(LoginRequiredMixin, UpdateView):
     model = Gun
     form_class = GunForm
     template_name = 'guns/gun_form.html'
@@ -99,11 +95,7 @@ class GunUpdateView(LoginRequiredMixin, ModeratorRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('gun_detail', kwargs={'slug': self.object.slug})
 
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        return response
-
-class GunDeleteView(LoginRequiredMixin, ModeratorRequiredMixin, DeleteView):
+class GunDeleteView(LoginRequiredMixin, DeleteView):
     model = Gun
     template_name = 'guns/gun_confirm_delete.html'
     success_url = reverse_lazy('gun_list')
@@ -125,14 +117,14 @@ class CategoryDetailView(DetailView):
         context['guns'] = self.object.guns.all()
         return context
 
-class CategoryCreateView(LoginRequiredMixin, ModeratorRequiredMixin, CreateView):
+class CategoryCreateView(LoginRequiredMixin, CreateView):
     model = Category
     form_class = CategoryForm
     template_name = 'guns/category_form.html'
     success_url = reverse_lazy('category_list')
     login_url = 'login'
 
-class CategoryUpdateView(LoginRequiredMixin, ModeratorRequiredMixin, UpdateView):
+class CategoryUpdateView(LoginRequiredMixin, UpdateView):
     model = Category
     form_class = CategoryForm
     template_name = 'guns/category_form.html'
@@ -141,7 +133,7 @@ class CategoryUpdateView(LoginRequiredMixin, ModeratorRequiredMixin, UpdateView)
     def get_success_url(self):
         return reverse_lazy('category_list')
 
-class CategoryDeleteView(LoginRequiredMixin, ModeratorRequiredMixin, DeleteView):
+class CategoryDeleteView(LoginRequiredMixin, DeleteView):
     model = Category
     template_name = 'guns/category_confirm_delete.html'
     success_url = reverse_lazy('category_list')
