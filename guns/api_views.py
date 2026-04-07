@@ -43,10 +43,15 @@ class SendEmailAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-
-        task = send_welcome_email.delay(email)
+        try:
+            send_welcome_email(email)
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to send email: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         return Response(
-            {"message": "Email task queued.", "task_id": task.id},
-            status=status.HTTP_202_ACCEPTED
+            {"message": "Email sent successfully."},
+            status=status.HTTP_200_OK
         )
