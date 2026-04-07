@@ -9,6 +9,7 @@ from .models import Profile
 from .forms import ProfileForm
 from guns.tasks import send_welcome_email
 from django.http import JsonResponse
+from .models import User
 
 class RegisterView(CreateView):
     form_class = RegisterForm
@@ -42,8 +43,21 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
 
 def register_user(request):
-    email = "user@example.com"
+    username = request.POST.get("username")
+    email = request.POST.get("email")
+    password = request.POST.get("password")
+
+    if not username or not email or not password:
+        return JsonResponse({"error": "Missing fields!"}, status=400)
+
+    user = User.objects.create_user(username=username, email=email, password=password)
+
+
+    if email.endswith("@staff.com"):
+        user.is_staff = True
+        user.save()
+
 
     send_welcome_email.delay(email)
 
-    return JsonResponse({"message": "User registered!"})
+    return JsonResponse({"message": "User registered!", "is_moderator": user.is_staff})
