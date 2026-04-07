@@ -25,7 +25,7 @@ urlpatterns = [
     path('', include('core.urls')),
     path('guns/', include('guns.urls')),
     path('reviews/', include('reviews.urls')),
-    path('api/', include('guns.urls')),
+    path('api/', include('guns.api_urls')),
 ]
 
 if settings.DEBUG:

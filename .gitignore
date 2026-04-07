@@ -6,5 +6,6 @@ __pycache__/
 .env
 
 .idea/
+staticfiles/
 
 db.sqlite3
